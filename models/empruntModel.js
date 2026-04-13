@@ -9,10 +9,10 @@ const empruntSchema = new mongoose.Schema({
     },
     // الربط مع الكتاب (Livre)
     idLivre: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Livre', // نفس السمية اللي عطينا للموديل فـ livreModel.js
-        required: true
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Book', // تأكد أنها 'Book' حيت هادي هي اللي كاينا فـ bookModel.js
+    required: true
+},
     dateEmprunt: {
         type: Date,
         default: Date.now
