@@ -1,19 +1,29 @@
 const mongoose = require('mongoose');
 
 const empruntSchema = new mongoose.Schema({
-  idClient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  idLivre: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Book'
-  },
-  dateEmprunt: {
-    type: Date,
-    default: Date.now
-  },
-  dateRetour: Date
-});
+    // الربط مع المستخدم (Client)
+    idClient: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // نفس السمية اللي عطينا للموديل فـ userModel.js
+        required: true
+    },
+    // الربط مع الكتاب (Livre)
+    idLivre: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Livre', // نفس السمية اللي عطينا للموديل فـ livreModel.js
+        required: true
+    },
+    dateEmprunt: {
+        type: Date,
+        default: Date.now
+    },
+    dateRetourPrevue: {
+        type: Date,
+        required: true
+    },
+    dateRetourReelle: {
+        type: Date // غاتبقى خاوية حتى يرجع الكتاب
+    }
+}, { timestamps: true });
 
 module.exports = mongoose.model('Emprunt', empruntSchema);
