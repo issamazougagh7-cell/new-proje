@@ -14,8 +14,12 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ Connected to MongoDB"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// --- خلي هاد السطر فيه // فالبداية حيت باقي ما كاينش هاد المجلد ---
-// app.use('/api/users', require('./routes/userRoutes'));
+// --- تفعيل الروابط (Routes) ---
+// تأكد أن المجلد سميتو routes والملفات سميتهم هكا:
+app.use('/api/auth', require('./routes/auth'));       // تسجيل الدخول والتسجيل
+app.use('/api/books', require('./routes/book'));     // إدارة الكتب
+app.use('/api/emprunts', require('./routes/emprunt')); // إدارة التسلاف
+app.use('/api/users', require('./routes/user'));     // إدارة المستخدمين
 
 app.get('/', (req, res) => res.send("API is working!"));
 
