@@ -6,6 +6,14 @@ const isAuthenticated = require('../middleware/isAuthenticated');
 
 /**
  * @swagger
+ * tags:
+ * name: Emprunt
+ * description: إدارة عمليات تسليف وترجاع الكتب
+ */
+
+// --- 1. POST: إضافة تسليفة جديدة (US1) ---
+/**
+ * @swagger
  * /api/v1/emprunt:
  * post:
  * summary: Ajouter un nouvel emprunt
@@ -24,18 +32,14 @@ const isAuthenticated = require('../middleware/isAuthenticated');
  * properties:
  * idLivre:
  * type: string
- * description: ID du livre à emprunter
  * dateRetourPrevue:
  * type: string
  * format: date
- * description: La date prévue pour rendre le livre
  * responses:
  * 201:
- * description: Emprunt ajouté avec succès
+ * description: Emprunt créé
  * 400:
- * description: Livre non disponible ou données invalides
- * 401:
- * description: Non autorisé (Token manquant)
+ * description: Livre non disponible
  */
 router.post('/', isAuthenticated, async (req, res) => {
     try {
@@ -47,7 +51,7 @@ router.post('/', isAuthenticated, async (req, res) => {
         }
 
         const emprunt = await Emprunt.create({
-            idClient: req.user.id, // كايجي من الـ Token
+            idClient: req.user.id, // كايجي من الـ Token أوتوماتيكياً
             idLivre,
             dateRetourPrevue
         });
@@ -61,11 +65,36 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
 });
 
+// --- 2. GET: عرض كل التسليفات مع التفاصيل (الزيادة اللي درنا) ---
+/**
+ * @swagger
+ * /api/v1/emprunt:
+ * get:
+ * summary: Liste de tous les emprunts
+ * tags: [Emprunt]
+ * security:
+ * - bearerAuth: []
+ * responses:
+ * 200:
+ * description: Succès
+ */
+router.get('/', isAuthenticated, async (req, res) => {
+    try {
+        const emprunts = await Emprunt.find()
+            .populate('idLivre', 'titre auteur') 
+            .populate('idClient', 'nom prenom email');
+        res.status(200).json(emprunts);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- 3. PUT: ترجاع كتاب وتحديث الحالة (US2) ---
 /**
  * @swagger
  * /api/v1/emprunt/return/{id}:
  * put:
- * summary: Retourner un livre emprunté
+ * summary: Retourner un livre
  * tags: [Emprunt]
  * security:
  * - bearerAuth: []
@@ -75,17 +104,18 @@ router.post('/', isAuthenticated, async (req, res) => {
  * required: true
  * schema:
  * type: string
- * description: ID de l'emprunt
  * responses:
  * 200:
- * description: Livre retourné avec succès
- * 404:
- * description: Emprunt non trouvé
+ * description: Livre retourné
  */
 router.put('/return/:id', isAuthenticated, async (req, res) => {
     try {
         const emprunt = await Emprunt.findById(req.params.id);
         if (!emprunt) return res.status(404).json("Emprunt non trouvé");
+
+        if (emprunt.dateRetourReelle) {
+            return res.status(400).json("Ce livre est déjà retourné");
+        }
 
         emprunt.dateRetourReelle = Date.now();
         await emprunt.save();
