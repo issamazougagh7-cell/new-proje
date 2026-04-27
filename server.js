@@ -20,6 +20,8 @@ app.use('/api/auth', require('./routes/auth'));       // تسجيل الدخول
 app.use('/api/books', require('./routes/book'));     // إدارة الكتب
 app.use('/api/emprunts', require('./routes/emprunt')); // إدارة التسلاف
 app.use('/api/users', require('./routes/user'));     // إدارة المستخدمين
+app.use('/api/v1/auth', require('./routes/auth'));
+app.use('/api/v1/emprunt', require('./routes/emprunt'));
 
 app.get('/', (req, res) => res.send("API is working!"));
 
