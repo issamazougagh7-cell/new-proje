@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
-const livreSchema = new mongoose.Schema({
+const bookSchema = new mongoose.Schema({
     titre: { type: String, required: true },
     auteur: { type: String, required: true },
-    isbn: { type: String, unique: true },
-    disponible: { type: Boolean, default: true } // هادي مهمة باش نعرفو واش الكتاب كاين ولا مسلف
+    isbn: { type: String, unique: true }, // زوين بزاف
+    etat: { 
+        type: String, 
+        enum: ['disponible', 'emprunté'], 
+        default: 'disponible' 
+    }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Livre', livreSchema);
+module.exports = mongoose.model('Book', bookSchema);
