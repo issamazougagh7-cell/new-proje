@@ -2,54 +2,72 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const User = require("../models/userModel"); // ضروري نعيطو للموديل
+const User = require("../models/userModel"); // الربط مع الموديل ديال المستخدم
 
-// --- REGISTER (تسجيل مستخدم جديد) ---
+// --- 1. REGISTER: تسجيل مستخدم جديد ---
 router.post("/register", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password, nom, prenom } = req.body;
 
-    // 1. واش المستخدم كاين ديجا؟
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json("Email déjà utilisé");
+        // التأكد واش الإيميل ديجا كاين
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: "هاد الإيميل مسجل ديجا" });
+        }
 
-    // 2. تشفير الكلمة السرية
-    const hashedPassword = await bcrypt.hash(password, 10);
+        // تشفير الكلمة السرية
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. التسجيل فـ MongoDB
-    const newUser = await User.create({
-      email,
-      password: hashedPassword
-    });
+        // إنشاء المستخدم فـ MongoDB
+        const newUser = await User.create({
+            nom,
+            prenom,
+            email,
+            password: hashedPassword
+        });
 
-    res.status(201).json({ message: "Utilisateur créé avec succès" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+        res.status(201).json({ 
+            message: "تم إنشاء الحساب بنجاح", 
+            userId: newUser._id 
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// --- LOGIN (تسجيل الدخول) ---
+// --- 2. LOGIN: تسجيل الدخول ---
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    // 1. قلب على المستخدم فـ الداتابيز
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json("Utilisateur non trouvé");
+        // البحث على المستخدم بالإيميل
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "المستخدم غير موجود" });
+        }
 
-    // 2. تأكد من الكلمة السرية
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json("Mot de passe incorrect");
+        // مقارنة الكلمة السرية المشفرة
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "كلمة السر خاطئة" });
+        }
 
-    // 3. صايب الـ Token (كنديرو فيه id ديال MongoDB)
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+        // إنشاء الـ Token (كنصيفطو الـ ID ديالو وسط الـ Payload)
+        const token = jwt.sign(
+            { id: user._id }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: "1h" }
+        );
 
-    res.json({ token, message: "Connecté !" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+        res.json({ 
+            message: "تم تسجيل الدخول !",
+            token: token 
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
