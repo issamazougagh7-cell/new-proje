@@ -1,15 +1,25 @@
 const express = require('express');
 const router = express.Router();
-
 const Book = require('../models/bookModel');
+const isAuthenticated = require('../middleware/isAuthenticated'); // حماية المسار
 
-// POST /book
-router.post('/book', async (req, res) => {
+// 1. إضافة كتاب جديد (خاص بالأدمين مثلاً)
+router.post('/', isAuthenticated, async (req, res) => {
   try {
     const book = await Book.create(req.body);
-    res.status(200).json(book);
+    res.status(201).json(book); // 201 كتعني Created
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. جلب كاع الكتب (باقي غاتحتاجوها فـ الـ Frontend)
+router.get('/', async (req, res) => {
+  try {
+    const books = await Book.find();
+    res.status(200).json(books);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
