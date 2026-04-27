@@ -2,23 +2,23 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const User = require("../models/userModel"); // الربط مع الموديل ديال المستخدم
+const User = require("../models/userModel");
 
 // --- 1. REGISTER: تسجيل مستخدم جديد ---
 router.post("/register", async (req, res) => {
     try {
         const { email, password, nom, prenom } = req.body;
 
-        // التأكد واش الإيميل ديجا كاين
+        // التأكد واش الإيميل ديجا كاين فـ الداتابيز
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: "هاد الإيميل مسجل ديجا" });
+            return res.status(400).json({ message: "هاد الحساب موجود ديجا" });
         }
 
-        // تشفير الكلمة السرية
+        // تشفير الكلمة السرية قبل التسجيل
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // إنشاء المستخدم فـ MongoDB
+        // حفظ المستخدم فـ MongoDB
         const newUser = await User.create({
             nom,
             prenom,
@@ -27,7 +27,7 @@ router.post("/register", async (req, res) => {
         });
 
         res.status(201).json({ 
-            message: "تم إنشاء الحساب بنجاح", 
+            message: "تم إنشاء الحساب !", 
             userId: newUser._id 
         });
 
@@ -47,13 +47,13 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ message: "المستخدم غير موجود" });
         }
 
-        // مقارنة الكلمة السرية المشفرة
+        // التأكد من صحة الكلمة السرية
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: "كلمة السر خاطئة" });
         }
 
-        // إنشاء الـ Token (كنصيفطو الـ ID ديالو وسط الـ Payload)
+        // إنشاء الـ Token (باستعمال id اللي مخبي فـ .env)
         const token = jwt.sign(
             { id: user._id }, 
             process.env.JWT_SECRET, 
@@ -61,7 +61,7 @@ router.post("/login", async (req, res) => {
         );
 
         res.json({ 
-            message: "تم تسجيل الدخول !",
+            message: "تم تسجيل الدخول بنجاح",
             token: token 
         });
 
