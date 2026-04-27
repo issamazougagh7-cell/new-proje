@@ -2,36 +2,54 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const User = require("../models/userModel"); // ضروري نعيطو للموديل
 
-let users = []; // temporaire
-
-// REGISTER
+// --- REGISTER (تسجيل مستخدم جديد) ---
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    // 1. واش المستخدم كاين ديجا؟
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(400).json("Email déjà utilisé");
 
-  const user = { id: Date.now(), email, password: hashedPassword };
-  users.push(user);
+    // 2. تشفير الكلمة السرية
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  res.json({ message: "User created" });
+    // 3. التسجيل فـ MongoDB
+    const newUser = await User.create({
+      email,
+      password: hashedPassword
+    });
+
+    res.status(201).json({ message: "Utilisateur créé avec succès" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// LOGIN
+// --- LOGIN (تسجيل الدخول) ---
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = users.find(u => u.email === email);
-  if (!user) return res.status(400).json("User not found");
+    // 1. قلب على المستخدم فـ الداتابيز
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json("Utilisateur non trouvé");
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(400).json("Wrong password");
+    // 2. تأكد من الكلمة السرية
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json("Mot de passe incorrect");
 
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+    // 3. صايب الـ Token (كنديرو فيه id ديال MongoDB)
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
-  res.json({ token });
+    res.json({ token, message: "Connecté !" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
