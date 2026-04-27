@@ -8,7 +8,7 @@ const isAuthenticated = require('../middleware/isAuthenticated');
  * @swagger
  * tags:
  * name: Emprunt
- * description: إدارة عمليات تسليف وترجاع الكتب
+ * description: إدارة عمليات تسليف وترجاع الكتب وتتبع المستخدمين
  */
 
 // --- 1. POST: إضافة تسليفة جديدة (US1) ---
@@ -37,9 +37,7 @@ const isAuthenticated = require('../middleware/isAuthenticated');
  * format: date
  * responses:
  * 201:
- * description: Emprunt créé
- * 400:
- * description: Livre non disponible
+ * description: Emprunt créé avec succès
  */
 router.post('/', isAuthenticated, async (req, res) => {
     try {
@@ -47,11 +45,11 @@ router.post('/', isAuthenticated, async (req, res) => {
 
         const book = await Book.findById(idLivre);
         if (!book || book.etat === 'emprunté') {
-            return res.status(400).json({ message: 'Livre non disponible ou introuvable' });
+            return res.status(400).json({ message: 'Livre non disponible' });
         }
 
         const emprunt = await Emprunt.create({
-            idClient: req.user.id, // كايجي من الـ Token أوتوماتيكياً
+            idClient: req.user.id, 
             idLivre,
             dateRetourPrevue
         });
@@ -65,12 +63,12 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
 });
 
-// --- 2. GET: عرض كل التسليفات مع التفاصيل (الزيادة اللي درنا) ---
+// --- 2. GET: عرض كل التسليفات (للأدمين مثلاً) ---
 /**
  * @swagger
  * /api/v1/emprunt:
  * get:
- * summary: Liste de tous les emprunts
+ * summary: Liste de tous les emprunts (Admin)
  * tags: [Emprunt]
  * security:
  * - bearerAuth: []
@@ -89,7 +87,41 @@ router.get('/', isAuthenticated, async (req, res) => {
     }
 });
 
-// --- 3. PUT: ترجاع كتاب وتحديث الحالة (US2) ---
+// --- 3. GET: عرض تسليفات كليان محدد (Task الجديد) ---
+/**
+ * @swagger
+ * /api/v1/emprunt/client/{idClient}:
+ * get:
+ * summary: Consulter les emprunts d'un client spécifique
+ * tags: [Emprunt]
+ * security:
+ * - bearerAuth: []
+ * parameters:
+ * - in: path
+ * name: idClient
+ * required: true
+ * schema:
+ * type: string
+ * responses:
+ * 200:
+ * description: Historique du client récupéré
+ */
+router.get('/client/:idClient', isAuthenticated, async (req, res) => {
+    try {
+        const { idClient } = req.params;
+        const emprunts = await Emprunt.find({ idClient })
+            .populate('idLivre', 'titre auteur')
+            .sort({ createdAt: -1 });
+
+        if (!emprunts.length) return res.status(404).json({ message: "Aucun emprunt trouvé" });
+        
+        res.status(200).json(emprunts);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- 4. PUT: ترجاع كتاب (US2) ---
 /**
  * @swagger
  * /api/v1/emprunt/return/{id}:
@@ -112,10 +144,7 @@ router.put('/return/:id', isAuthenticated, async (req, res) => {
     try {
         const emprunt = await Emprunt.findById(req.params.id);
         if (!emprunt) return res.status(404).json("Emprunt non trouvé");
-
-        if (emprunt.dateRetourReelle) {
-            return res.status(400).json("Ce livre est déjà retourné");
-        }
+        if (emprunt.dateRetourReelle) return res.status(400).json("Déjà retourné");
 
         emprunt.dateRetourReelle = Date.now();
         await emprunt.save();
