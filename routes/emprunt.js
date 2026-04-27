@@ -1,3 +1,66 @@
+/**
+ * @swagger
+ * /api/v1/emprunt:
+ * post:
+ * summary: Ajouter un nouvel emprunt
+ * tags: [Emprunt]
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * idClient:
+ * type: string
+ * description: ID unique du client (User)
+ * idLivre:
+ * type: string
+ * description: ID du livre à emprunter
+ * dateRetourPrevue:
+ * type: string
+ * format: date
+ * description: La date prévue pour rendre le livre
+ * responses:
+ * 200:
+ * description: Emprunt ajouté avec succès
+ * 400:
+ * description: Données invalides
+ */
+router.post('/emprunt', (req, res) => {
+  // هنا كيكون الكود ديال logic لي كيخدم بالـ Model لي صاوبتي
+/**
+ * @swagger
+ * /api/v1/emprunt:
+ * post:
+ * summary: Ajouter un nouvel emprunt
+ * tags: [Emprunt]
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * idClient:
+ * type: string
+ * description: ID unique du client (User)
+ * idLivre:
+ * type: string
+ * description: ID du livre à emprunter
+ * dateRetourPrevue:
+ * type: string
+ * format: date
+ * description: La date prévue pour rendre le livre
+ * responses:
+ * 200:
+ * description: Emprunt ajouté avec succès
+ * 400:
+ * description: Données invalides
+ */
+router.post('/emprunt', (req, res) => {
+  // هنا كيكون الكود ديال logic لي كيخدم بالـ Model لي صاوبتي
+
 const express = require('express');
 const router = express.Router();
 const Emprunt = require('../models/empruntModel');
@@ -53,3 +116,4 @@ router.put('/return/:id', isAuthenticated, async (req, res) => {
 });
 
 module.exports = router;
+    });
